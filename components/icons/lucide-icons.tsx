@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  BookOpen,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
   Info,
   Laptop,
   Mail,
+  Menu,
   Moon,
   Rss,
   Sun,
@@ -36,4 +38,6 @@ export const Icons = {
   sun: Sun,
   tag: Tag,
   xCircle: XCircle,
+  book: BookOpen,
+  menu:Menu
 };
