@@ -1,4 +1,5 @@
-import {  LucideProps, } from "lucide-react";
+"use client"
+import { LucideProps, PlusCircleIcon, } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,35 +20,12 @@ import {
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Icons } from "../icons";
-import { ForwardRefExoticComponent, RefAttributes } from "react";
+import { ForwardRefExoticComponent, RefAttributes, useEffect, useState } from "react";
 import { ModeSwitch } from "../layout/mode-switch";
+import { MenuItem, NavbarProps } from "@/types";
 
-interface MenuItem {
-  title: string;
-  url: string;
-  description?: string;
-  icon?: React.ReactNode;
-  items?: MenuItem[];
-}
 
-interface NavbarProps {
-  logo?: {
-    icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
-    url: string
-    title: string;
-  };
-  menu?: MenuItem[];
-  auth?: {
-    login: {
-      title: string;
-      url: string;
-    };
-    signup: {
-      title: string;
-      url: string;
-    };
-  };
-}
+
 
 const Navbar = ({
   logo = {
@@ -60,23 +38,68 @@ const Navbar = ({
     {
       title: "My Posts",
       url: "#",
-
     },
-
   ],
   auth = {
     login: { title: "Login", url: "/sign-in" },
     signup: { title: "Sign up", url: "/sign-up" },
   },
 }: NavbarProps) => {
+
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'testimonials') {
+      const testimonialSection = document.querySelector('.animate-marquee');
+      if (testimonialSection) {
+        const yOffset = -100; // Offset to account for the fixed header
+        const y = testimonialSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    } else if (sectionId === 'cta') {
+      const ctaSection = document.querySelector('.button-gradient');
+      if (ctaSection) {
+        const yOffset = -100;
+        const y = ctaSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const navItems = [
+    { name: "Features", href: "#features", onClick: () => scrollToSection('features') },
+    { name: "Prices", href: "#pricing", onClick: () => scrollToSection('pricing') },
+    { name: "Testimonials", href: "#testimonials", onClick: () => scrollToSection('testimonials') },
+  ];
+
+
   return (
-    <section className="py-4 border-b bg-background/50 backdrop-blur-md  px-2">
-      <div className=" mx-auto container sticky top-0 z-40 ">
-        {/* Desktop Menu */}
-        <nav className="hidden justify-between md:flex">
+    <header
+      className={`fixed top-3.5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 rounded-full ${isScrolled
+        ? "h-14 bg-background backdrop-blur-xl border border-white/10 scale-95 w-[90%] max-w-2xl"
+        : "h-14 bg-background  w-[95%] max-w-3xl"
+        }`}
+    >
+      <div className="mx-auto h-full px-6">
+        <nav className="flex items-center justify-between h-full">
           <div className="flex items-center gap-6">
-            {/* Logo */}
-            <Link href={logo.url} className="flex items-center gap-2">
+
+            <Link href={logo.url} className="flex items-center gap-2 ">
               <span>{logo.icon && <logo.icon />}</span>
               <span className="text-lg font-semibold tracking-tighter">
                 {logo.title}
@@ -84,17 +107,24 @@ const Navbar = ({
             </Link>
 
           </div>
-          <div className="flex gap-2">
-            <div className="flex items-center">
 
-            </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6 ">
 
             <SignedIn>
-              <NavigationMenu>
-                <NavigationMenuList>
-                  {menu.map((item) => renderMenuItem(item))}
-                </NavigationMenuList>
-              </NavigationMenu>
+              {menu.map((item) => (
+                <Link
+                  key={item.title}
+                  href={item.url}
+
+                >
+                  {item.title}
+                </Link>
+              ))}
+              <Button variant={"secondary"} className="flex items-center justify-center gap-1 cursor-pointer rounded-3xl">
+                <PlusCircleIcon />
+                <span>Create</span>
+              </Button>
               <ModeSwitch />
               <UserButton appearance={
                 {
@@ -120,99 +150,82 @@ const Navbar = ({
                 </Button>
               </SignInButton>
             </SignedOut>
-
-
           </div>
 
-        </nav>
+          {/* Mobile Navigation */}
+          <div className="block md:hidden">
+            <div className="flex items-center justify-between gap-2">
 
+              <UserButton appearance={
+                {
+                  elements: {
+                    avatarBox: "h-10 w-10",
+                    userButtonPopoverCard: "shadow-xl",
+                    userPreviewMainIdentifier: "text-semibold",
+                  }
+                }
 
-        {/* Mobile Menu */}
-        <div className="block md:hidden">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href={logo.url} className="flex items-center gap-2">
-              <span>{logo.icon && <logo.icon />}</span>
-            </Link>
-            <ModeSwitch />
-            <Sheet>
-              <SheetTrigger asChild className="cursor-pointer">
-                <Button variant="outline" size="icon">
-                  <Icons.menu className="size-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>
-                    <Link href={logo.url} className="flex items-center gap-2">
-                      BlogForge
-                    </Link>
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-6 p-4">
-                  <div
+              }
+                afterSwitchSessionUrl="/"
+                afterSignOutUrl="/"
+              />
+              <Sheet>
+                <SheetTrigger asChild className="cursor-pointer">
+                  <Button variant="outline" size="icon">
+                    <Icons.menu className="size-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>
 
+                      <ModeSwitch />
 
-                    className="flex w-full flex-col gap-4"
-                  >
-                    {menu.map((item, i) => <Link key={i} href={item.url} >
-                      <Button variant={"ghost"} className="w-full justify-start cursor-pointer">
-                        {item.title}
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-6 p-4">
+                    <SignedIn>
+
+                      {menu.map((item) => (
+                        <Link
+                          key={item.title}
+                          href={item.url}
+
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                      <Button variant={"outline"} className="flex items-center justify-center gap-1 cursor-pointer rounded-3xl bg-background">
+                        <PlusCircleIcon />
+                        <span>Create</span>
                       </Button>
-                    </Link>)}
+
+
+                    </SignedIn>
+
+                    <SignedOut >
+                      <SignInButton >
+                        <Button className="cursor-pointer" variant={"outline"}>
+
+                          Sign In
+                        </Button>
+                      </SignInButton>
+                    </SignedOut>
+
+
                   </div>
-
-
-
-                  <SignedOut >
-                    <SignInButton >
-                      <Button className="cursor-pointer" variant={"outline"}>
-
-                        Sign In
-                      </Button>
-                    </SignInButton>
-                  </SignedOut>
-
-
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
-        </div>
-
+        </nav>
       </div>
-    </section>
+    </header>
   );
 };
 
-const renderMenuItem = (item: MenuItem) => {
-  if (item.items) {
-    return (
-      <NavigationMenuItem key={item.title}>
-        <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
-        <NavigationMenuContent className="bg-popover text-popover-foreground">
-          {item.items.map((subItem) => (
-            <NavigationMenuLink asChild key={subItem.title} className="w-80">
-
-            </NavigationMenuLink>
-          ))}
-        </NavigationMenuContent>
-      </NavigationMenuItem>
-    );
-  }
-
-  return (
-    <NavigationMenuItem key={item.title}>
-      <NavigationMenuLink
-        href={item.url}
-        className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground"
-      >
-        {item.title}
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-  );
-};
 
 
 
 export default Navbar;
+
